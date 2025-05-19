@@ -1,0 +1,38 @@
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    volumes:
+      - mongodb_data:/data/db/
+
+  valkey:
+    image: valkey/valkey:latest
+    volumes:
+      - valkey_data:/usr/local/etc/valkey
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    env_file:
+      - ./.env
+    ports:
+      - 8000:8000
+
+  worker:
+    command:
+      ['/bin/sh', '-c', 'rq worker --with-scheduler --url redis://valkey:6379']
+    build:
+      dockerfile: Dockerfile
+      context: .
+    env_file:
+      - ./.env
+    ports:
+      - 8001:8000
+
+volumes:
+  mongodb_data:
+  valkey_data:
